@@ -13,9 +13,9 @@ interface Props {
 const PADDING = 24;
 
 export function TrajectoryMap({ points, width, height, showGrid = true }: Props) {
-  const { path, currentPos, bounds, scale } = useMemo(() => {
+  const { path, startPos, currentPos, bounds, scale } = useMemo(() => {
     if (points.length === 0) {
-      return { path: null, currentPos: null, bounds: null, scale: 1 };
+      return { path: null, startPos: null, currentPos: null, bounds: null, scale: 1 };
     }
 
     const xs = points.map((p) => p.x);
@@ -37,9 +37,9 @@ export function TrajectoryMap({ points, width, height, showGrid = true }: Props)
     });
 
     const skPath = Skia.Path.Make();
-    const origin = project({ step: 0, x: 0, y: 0 });
-    skPath.moveTo(origin.x, origin.y);
-    points.forEach((p) => {
+    const firstPt = project(points[0]);
+    skPath.moveTo(firstPt.x, firstPt.y);
+    points.slice(1).forEach((p) => {
       const { x, y } = project(p);
       skPath.lineTo(x, y);
     });
@@ -47,6 +47,7 @@ export function TrajectoryMap({ points, width, height, showGrid = true }: Props)
     const last = points[points.length - 1];
     return {
       path: skPath,
+      startPos: firstPt,
       currentPos: project(last),
       bounds: { minX, maxX, minY, maxY },
       scale: computedScale,
@@ -90,18 +91,9 @@ export function TrajectoryMap({ points, width, height, showGrid = true }: Props)
           />
         )}
 
-        {/* Start marker */}
-        {points.length > 0 && (
-          <Circle
-            cx={PADDING + (0 - (bounds?.minX ?? 0)) * scale}
-            cy={
-              PADDING +
-              (height - PADDING * 2) -
-              (0 - (bounds?.minY ?? 0)) * scale
-            }
-            r={6}
-            color="#22d3ee"
-          />
+        {/* Start marker — cyan dot at first recorded point */}
+        {startPos && (
+          <Circle cx={startPos.x} cy={startPos.y} r={6} color="#22d3ee" />
         )}
 
         {/* Current position */}

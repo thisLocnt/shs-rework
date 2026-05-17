@@ -1,7 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect } from 'react';
 import { DeviceMotion } from 'expo-sensors';
 import { toGroundFrame, magnitude } from '@/algorithms/rotationMatrix';
 import { movingAverage } from '@/algorithms/movingAverage';
@@ -17,7 +16,7 @@ export default function CalibrateScreen() {
   const [distance, setDistance] = useState('10');
   const [phase, setPhase] = useState<Phase>('idle');
   const [stepCount, setStepCount] = useState(0);
-  const [accelBuffer, setAccelBuffer] = useState<number[]>([]);
+  const bufRef = useRef<number[]>([]);
   const [subscription, setSubscription] = useState<ReturnType<typeof DeviceMotion.addListener> | null>(null);
 
   function startCalibration() {
@@ -28,11 +27,10 @@ export default function CalibrateScreen() {
     }
     setPhase('walking');
     setStepCount(0);
-    setAccelBuffer([]);
+    bufRef.current = [];
 
     DeviceMotion.setUpdateInterval(20);
     let steps = 0;
-    const buf: number[] = [];
 
     const sub = DeviceMotion.addListener((data) => {
       const { acceleration, rotation } = data;
@@ -40,9 +38,10 @@ export default function CalibrateScreen() {
 
       const ground = toGroundFrame(acceleration, rotation.beta ?? 0, rotation.gamma ?? 0);
       const mag = magnitude(ground);
-      buf.push(mag);
-      if (buf.length > 300) buf.shift();
+      bufRef.current.push(mag);
+      if (bufRef.current.length > 300) bufRef.current.shift();
 
+      const buf = bufRef.current;
       const variance = buf.slice(-5).reduce((acc, v, _, arr) => {
         const mean = arr.reduce((a, b) => a + b) / arr.length;
         return acc + (v - mean) ** 2;
@@ -57,7 +56,6 @@ export default function CalibrateScreen() {
     });
 
     setSubscription(sub);
-    setAccelBuffer(buf);
   }
 
   function finishCalibration() {

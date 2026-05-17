@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { utils, writeFile } from 'xlsx';
+import { utils, write } from 'xlsx';
 import { useTrackingStore } from '@/store/trackingStore';
 
 export default function DebugScreen() {
@@ -27,7 +27,7 @@ export default function DebugScreen() {
     utils.book_append_sheet(wb, ws, 'Steps');
 
     const uri = `${FileSystem.cacheDirectory}shs_export_${Date.now()}.xlsx`;
-    const buf = writeFile(wb, uri, { type: 'buffer' });
+    const buf: Uint8Array = write(wb, { type: 'buffer' });
     const b64 = Buffer.from(buf).toString('base64');
     await FileSystem.writeAsStringAsync(uri, b64, {
       encoding: FileSystem.EncodingType.Base64,

@@ -32,12 +32,16 @@ export class HeadingFusion {
       return this.fused;
     }
 
-    // Unwrap angle difference to avoid jumps at ±π
+    // Complementary filter: trust gyro short-term, magnetometer long-term
+    // Unwrap magnetometer angle difference relative to current fused heading
     let diff = magnetometerHeadingRad - this.fused;
     while (diff > Math.PI) diff -= 2 * Math.PI;
     while (diff < -Math.PI) diff += 2 * Math.PI;
 
-    this.fused = ALPHA * gyroYawRad + (1 - ALPHA) * (this.fused + diff);
+    // ALPHA * gyro_prediction + (1-ALPHA) * magnetometer_correction
+    const gyroPredict = gyroYawRad;
+    const magCorrect = this.fused + diff;
+    this.fused = ALPHA * gyroPredict + (1 - ALPHA) * magCorrect;
     return this.fused;
   }
 }

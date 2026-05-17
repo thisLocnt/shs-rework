@@ -1,7 +1,7 @@
-import { createMMKV } from 'react-native-mmkv';
+import { MMKV } from 'react-native-mmkv';
 import { Session, SessionSummary } from '@/types/session';
 
-const storage = createMMKV({ id: 'shs-rework' });
+const storage = new MMKV({ id: 'shs-rework' });
 
 const SESSION_PREFIX = 'session:';
 const SESSION_INDEX_KEY = 'session:index';
@@ -45,7 +45,7 @@ export const storageService = {
   },
 
   deleteSession(id: string) {
-    storage.remove(`${SESSION_PREFIX}${id}`);
+    storage.delete(`${SESSION_PREFIX}${id}`);
     const index = this.getSessionIndex().filter((s) => s.id !== id);
     storage.set(SESSION_INDEX_KEY, JSON.stringify(index));
   },
